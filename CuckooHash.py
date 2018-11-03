@@ -66,38 +66,24 @@ class CuckooHash:
 		if self.population>=(self.len*0.9*3):
 			self.rehash()
 
-	def insertIntoStash(self,key):
-		self.stash.insert()
-
-
 	def delete(self,key):
-		if isinstance(key,int):
-			index = self.integerHashFunction(key)
-			'''the return value of integer 
-			hash function is assigned to hashvalues variable'''
-		else:
-			index = self.stringHashFunction(key)
-			'''the return value of string
-			hash function is assigned to hashvalues variable'''
-		if hashtable[0][index[0]]==key:
-			hashtable[0][index[0]]=None
-		elif hashtable[1][index[1]]==key:
-			hashtable[1][index[1]]=None
-		elif hashtable[2][index[2]]==key:
-			hashtable[2][index[2]]=key
-		else:
-			self.deleteFromStash(key)
-
-	def deleteFromStash(self,key):
-		s,e=0,len(self.stash)
-		while s<=e:
-			m=(s+e)//2
-			if self.stash[m]==key:
-				self.stash.pop(key)
-			elif self.stash[m]>key:
-				e=m-1
-			else
-				s=m+1
+		if self.lookup(key):
+			if isinstance(key,int):
+				index = self.integerHashFunction(key)
+				'''the return value of integer 
+				hash function is assigned to hashvalues variable'''
+			else:
+				index = self.stringHashFunction(key)
+				'''the return value of string
+				hash function is assigned to hashvalues variable'''
+			if hashtable[0][index[0]]==key:
+				hashtable[0][index[0]]=None
+			elif hashtable[1][index[1]]==key:
+				hashtable[1][index[1]]=None
+			elif hashtable[2][index[2]]==key:
+				hashtable[2][index[2]]=key
+			else:
+				self.stash.delete(key)
 
 	def lookup(self,key):
 		if(isinstance(key,int)):
@@ -105,17 +91,24 @@ class CuckooHash:
 		else:
 			hashvalues=self.stringHashFunction(key)
 		if hashtable[0][index[0]]==key:
+			return True
 
 		elif hashtable[1][index[1]]==key:
+			return True
 			
 		elif hashtable[2][index[2]]==key:
+			return True
 			
+		elif self.stash.population>0:
+			return self.stash.lookup(key)
 		else:
-			self.lookupInStash(key)
+			return False
 
 	def rehash(self):
 
 	def print(self):
+
+	def update	
 
 def main():
 
