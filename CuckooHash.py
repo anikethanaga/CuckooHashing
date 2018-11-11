@@ -4,17 +4,17 @@ class CuckooHash:
 	def __init__(self,size=1000):
 		self.len=size#length of tables
 		self.hashtable=[[None for _ in range(self.len)] for _ in range(3)]
-		#self.hashtable=[[None,None,None],[None,None,None],[None,None,None]]
 		self.stash=CuckooHash(self.len//10) if self.len>=10 else None#stash to store elements that create infinite loops
 		self.population=0#to store number of elements in all tables combined
 
-	def stringHashFunction(self,str):
+	def stringHashFunction(self,key):
+		key = key.lower()
 		p1=37#a prime number
 		sum1,sum2,sum3=37,5381,0#assigning initial values to hashvalues
-		for i in range(len(str)-1,-1,-1):
-			sum1 = (sum1+ord(str[i]))*p1#calculated using Horner's rule
-			sum2 = ((sum2 << 5) + sum2) + ord(str[i]) #djb2 algorithm
-			sum3 = ord(str[i]) + (sum3 << 6) + (sum3 << 16) - sum3#sdbm algorithm
+		for i in range(len(key)-1,-1,-1):
+			sum1 = (sum1+ord(key[i]))*p1#calculated using Horner's rule
+			sum2 = ((sum2 << 5) + sum2) + ord(key[i]) #djb2 algorithm
+			sum3 = ord(key[i]) + (sum3 << 6) + (sum3 << 16) - sum3#sdbm algorithm
 		sum1=sum1%self.len#using compression maps
 		sum2=sum2%self.len
 		sum3=sum3%self.len
@@ -39,19 +39,20 @@ class CuckooHash:
 		return (ans1,ans2,ans3)
 
 	def insert(self,data,count=0,i=0):
-		if(isinstance(data[0],int)):
-			hashvalues=self.integerHashFunction(data[0])
-			'''the return value of integer 
-			hash function is assigned to hashvalues variable'''
-		else:
-			hashvalues=self.stringHashFunction(data[0])
-			'''the return value of string
-			hash function is assigned to hashvalues variable'''
 		if self.stash is not None and (count>math.floor(math.log(self.len))):
 			self.stash.insert(data)				
 			return
 			'''Here we are checking if number of function calls exceeds the
 			log of table size. If it does,it indicates an infinite loop and we push into the stash'''
+		if(isinstance(data[0],int)):
+			hashvalues=self.integerHashFunction(data[0])
+			'''the return value of integer 
+			hash function is assigned to hashvalues variable'''
+		else:
+			data[0] = data[0].lower()
+			hashvalues=self.stringHashFunction(data[0])
+			'''the return value of string
+			hash function is assigned to hashvalues variable'''
 		if(self.hashtable[i][hashvalues[i]]==None):
 			self.hashtable[i][hashvalues[i]]=data
 			'''if the slot to which key is hashed is empty,then we
@@ -63,8 +64,8 @@ class CuckooHash:
 			'''if the slot to which the key is hashed is filled,then we pop 
 			the previous element ,insert the new element and rehash the previous key
 			to alternate location in the next table''' 
-			self.population += 1
-		if self.population>=(self.len*0.9*3):
+		self.population += 1
+		if self.population>self.len*0.9*3:
 			self.rehash()
 
 	def delete(self,key):
@@ -74,14 +75,15 @@ class CuckooHash:
 				'''the return value of integer 
 				hash function is assigned to hashvalues variable'''
 			else:
+				key = key.lower()
 				hashvalues = self.stringHashFunction(key)
 				'''the return value of string
 				hash function is assigned to hashvalues variable'''
-			if self.hashtable[0][hashvalues[0]][0]==key:
+			if self.hashtable[0][hashvalues[0]] is not None and self.hashtable[0][hashvalues[0]][0]==key:
 				self.hashtable[0][hashvalues[0]]=None
-			elif self.hashtable[1][hashvalues[1]][0]==key:
+			elif self.hashtable[1][hashvalues[1]] is not None and self.hashtable[1][hashvalues[1]][0]==key:
 				self.hashtable[1][hashvalues[1]]=None
-			elif self.hashtable[2][hashvalues[2]][0]==key:
+			elif self.hashtable[2][hashvalues[2]] is not None and self.hashtable[2][hashvalues[2]][0]==key:
 				self.hashtable[2][hashvalues[2]]=None
 			elif self.stash is not None and self.stash.population>0:
 				self.stash.delete(key)
@@ -90,14 +92,15 @@ class CuckooHash:
 		if(isinstance(key,int)):
 			hashvalues=self.integerHashFunction(key)
 		else:
+			key = key.lower()
 			hashvalues=self.stringHashFunction(key)
 		if self.hashtable[0][hashvalues[0]] is not None and self.hashtable[0][hashvalues[0]][0]==key:
 			return True
-		elif self.hashtable[1][hashvalues[1]] is not None and self.hashtable[1][hashvalues[1]][0]==key:
+		if self.hashtable[1][hashvalues[1]] is not None and self.hashtable[1][hashvalues[1]][0]==key:
 			return True			
-		elif self.hashtable[2][hashvalues[2]] is not None and self.hashtable[2][hashvalues[2]][0]==key:
+		if self.hashtable[2][hashvalues[2]] is not None and self.hashtable[2][hashvalues[2]][0]==key:
 			return True			
-		elif self.stash is not None and self.stash.population>0:
+		if self.stash is not None and self.stash.population>0:
 			return self.stash.lookup(key)
 		return False
 
@@ -118,7 +121,7 @@ class CuckooHash:
 		self.hashtable[2] = [None] * LEN
 		self.len=LEN
 		self.population=0
-		self.stash=CuckooHash(LEN//10) if LEN>10 else None
+		self.stash=CuckooHash(LEN//10) if LEN>=10 else None
 		for i in elements:
 			self.insert(i)
 
@@ -166,19 +169,3 @@ class CuckooHash:
 					print("invalid",key,val,">",self.hashtable[2][hashvalues[2]][1])
 			elif self.stash.population>0:
 				self.stash.update(sign,key,val)
-
-
-def main():
-	ht = CuckooHash()
-	ht.insert(["ably"])
-	ht.insert(["abl"])
-	#ht.print()
-	ht.insert(["bat"])
-	#print("\n\n\n\n")
-	ht.print()
-	#print(ht.len)
-	#ht.print()
-
-
-if __name__=='__main__':
-	main()

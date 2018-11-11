@@ -3,12 +3,12 @@ from CuckooHash import CuckooHash
 def AutoCorrect(word):
 	word=word+"\n"
 	filename=input("enter name of the file")
-	dic=CuckooHash(100)
+	dic=CuckooHash(130)
 	file_obj=open(filename,"r")
 	for w in file_obj:
 		dic.insert([w])
 	dic.print()	
-	print(dic.len)
+	print("length of tables is now",dic.len,"population is",dic.population)
 	result=dic.lookup(word)
 	if not(result):
 		possible_words=list()
@@ -63,8 +63,8 @@ def AutoCorrect(word):
 def main():
 	word=input("enter a word to search : ")
 	result=AutoCorrect(word)
-	#if result!=None:
-		#print("the possible words are :",result)
+	if result!=None:
+		print("the possible words are :",result)
 if __name__=='__main__':
 	#sys.setrecursionlimit(30000)
 	main()		
